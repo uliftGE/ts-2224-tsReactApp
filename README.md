@@ -8,7 +8,7 @@ src/BookDetailMadal.tsx <br/>
 src/BookList.jsx
 
 # 연결 서버
-https://github.com/uliftGE/ts-2224-useTsServer
+https://github.com/uliftGE/ts-2224-tsServer
 
 # 코드리뷰
 

@@ -4,7 +4,8 @@
 
 # 확인해주실 파일 
 
-src/BookDetailMadal.tsx src/BookList.jsx
+src/BookDetailMadal.tsx <br/>
+src/BookList.jsx
 
 # 연결 서버
 링크 

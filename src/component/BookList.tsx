@@ -1,81 +1,51 @@
 import React, { useEffect, useState } from 'react';
 import BookDetailModal from './BookDetailModal.tsx';
+import { Book } from '../type/book.ts';
+import { fetchBooks } from '../api/index.ts';
 
-// BookPreview: `Book`의 일부 속성만 포함
 type BookPreview = Pick<Book, 'id' | 'title' | 'coverImage'>;
 
-export interface Book {
-  id: number;
-  title: string;
-  description: string;
-  read: boolean;
-  genre: Genre;
-  coverImage: string;
-  review: string;
-}
-
-enum Genre {
-  Fiction = 'Fiction',
-  NonFiction = 'NonFiction',
-  Mystery = 'Mystery',
-  Biography = 'Biography',
-  Romance = 'Romance',
-  Novel = 'Novel',
-  Scientific = 'Scientific',
-}
-
-type ReadStatus = 'Read' | 'Unread';
+type ReadStatus = 'Read' | 'Unread' | 'All';
 
 const BookList = () => {
   const [books, setBooks] = useState<Book[]>([]);
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
   const [modalOpen, setModalOpen] = useState<boolean>(false);
   const [filterStatus, setFilterStatus] = useState<ReadStatus | null>(null);
+  const [isDataChanged, setIsDataChanged] = useState(false);
 
   useEffect(() => {
-    fetchBooks();
-  }, []);
-
-  // 서버에서 책 데이터 가져오기
-  const fetchBooks = async () => {
-    try {
-      const response = await fetch('http://localhost:4000/books');
-      const data: Book[] = await response.json();
-      setBooks(data);
-    } catch (error) {
-      console.error('Error fetching books:', error);
-    }
-  };
-
-  // 읽음 상태 업데이트 (백엔드 요청 포함)
-  const updateReadStatus = async (id: number, read: boolean) => {
-    try {
-      const response = await fetch(`http://localhost:4000/books/${id}/read`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ read }),
-      });
-
-      if (response.ok) {
-        setBooks((prevBooks) =>
-          prevBooks.map((book) => (book.id === id ? { ...book, read } : book))
+    const fetchAndSetBooks = async () => {
+      const data = await fetchBooks();
+      if (data) {
+        const readStatus = JSON.parse(
+          localStorage.getItem('readStatus') || '{}'
         );
+        const updatedBooks = data.map((book: Book) => ({
+          ...book,
+          read: readStatus[book.id] ?? false,
+        }));
+        setBooks(updatedBooks);
       } else {
-        console.error('Failed to update read status');
+        console.error('Failed to fetch books or received undefined');
+        setBooks([]);
       }
-    } catch (error) {
-      console.error('Error updating read status:', error);
-    }
-  };
+    };
 
-  // 읽음 상태 토글
-  const toggleBookReadStatus = (id: number) => {
-    const book = books.find((b) => b.id === id);
-    if (book) {
-      updateReadStatus(id, !book.read); // 백엔드 요청
-    }
+    fetchAndSetBooks();
+    setIsDataChanged(false);
+  }, [isDataChanged]);
+
+  const toggleBookReadStatus = async (id: number) => {
+    const updatedBooks = books.map((book) =>
+      book.id === id ? { ...book, read: !book.read } : book
+    );
+
+    setBooks(updatedBooks);
+
+    const readStatus = JSON.parse(localStorage.getItem('readStatus') || '{}');
+    readStatus[id] = !readStatus[id];
+    localStorage.setItem('readStatus', JSON.stringify(readStatus));
   };
 
   const openModal = (book: Book) => {
@@ -88,14 +58,8 @@ const BookList = () => {
     setSelectedBook(null);
   };
 
-  const updateBookReview = (id: number, review: string) => {
-    setBooks((prevBooks) =>
-      prevBooks.map((book) => (book.id === id ? { ...book, review } : book))
-    );
-  };
-
   const getFilteredBooks = (status: ReadStatus | null) => {
-    if (!status) return books;
+    if (status === 'All') return books;
     return books.filter((book) => (status === 'Read' ? book.read : !book.read));
   };
 
@@ -103,7 +67,7 @@ const BookList = () => {
     <div style={styles.container}>
       <h1 style={styles.header}>독서 목록</h1>
       <div style={styles.buttonGroup}>
-        {['Read', 'Unread', null].map((status, index) => (
+        {['Read', 'Unread', 'All'].map((status, index) => (
           <button
             key={index}
             onClick={() => setFilterStatus(status as ReadStatus | null)}
@@ -161,7 +125,8 @@ const BookList = () => {
           <BookDetailModal
             book={selectedBook}
             onClose={closeModal}
-            updateBookReview={updateBookReview}
+            id={selectedBook.id}
+            setIsDataChanged={setIsDataChanged}
           />
         </div>
       )}
@@ -173,12 +138,17 @@ const styles: Record<string, React.CSSProperties> = {
   container: { padding: '20px', fontFamily: 'Arial, sans-serif' },
   header: { textAlign: 'center', marginBottom: '20px' },
   buttonGroup: {
-    marginBottom: '20px',
+    marginBottom: '50px',
     display: 'flex',
     gap: '10px',
     justifyContent: 'center',
   },
-  button: { padding: '10px 20px', borderRadius: '5px', cursor: 'pointer' },
+  button: {
+    padding: '10px 20px',
+    borderRadius: '5px',
+    cursor: 'pointer',
+    border: 'none',
+  },
   list: { listStyle: 'none', padding: 0 },
   listItem: {
     display: 'flex',

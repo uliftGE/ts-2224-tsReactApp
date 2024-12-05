@@ -6,7 +6,7 @@ const MESSAGES = {
   saveNetworkError: '리뷰 저장 중 오류가 발생했습니다.',
 };
 
-// 서버에서 책 데이터 가져오기
+// 서버에서 모든 책 데이터 가져오기
 export const fetchBooks = async (): Promise<Book[] | undefined> => {
   try {
     const response = await fetch(`${BASE_URL}/books`);
@@ -18,7 +18,7 @@ export const fetchBooks = async (): Promise<Book[] | undefined> => {
   }
 };
 
-// 서버에서 책 데이터 가져오기
+// 서버에서 특정 책 데이터 가져오기
 export const fetchBookDetail = async (id: number) => {
   try {
     const response = await fetch(`${BASE_URL}/books/${id}`);
@@ -52,7 +52,7 @@ export const updateBook = async (id: number, review: Book['review']) => {
   }
 };
 
-// 4. 새로운 책 추가하기
+// 새로운 책 추가하기
 export const addBook = async (
   title: string,
   description: string,

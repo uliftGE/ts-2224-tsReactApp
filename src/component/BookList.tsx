@@ -16,18 +16,31 @@ const BookList = () => {
 
   useEffect(() => {
     const fetchAndSetBooks = async () => {
-      const data = await fetchBooks();
-      if (data) {
-        const readStatus = JSON.parse(
-          localStorage.getItem('readStatus') || '{}'
-        );
-        const updatedBooks = data.map((book: Book) => ({
-          ...book,
-          read: readStatus[book.id] ?? false,
-        }));
-        setBooks(updatedBooks);
-      } else {
-        console.error('Failed to fetch books or received undefined');
+      try {
+        const data = await fetchBooks();
+        if (data) {
+          let readStatus: Record<string, boolean> = {};
+          try {
+            readStatus = JSON.parse(localStorage.getItem('readStatus') ?? '{}');
+          } catch (parseError) {
+            console.error(
+              'Failed to parse readStatus from localStorage:',
+              parseError
+            );
+            readStatus = {};
+          }
+
+          const updatedBooks = data.map((book: Book) => ({
+            ...book,
+            read: readStatus[book.id] ?? false,
+          }));
+          setBooks(updatedBooks);
+        } else {
+          console.error('Failed to fetch books or received undefined');
+          setBooks([]);
+        }
+      } catch (error) {
+        console.error('Error fetching books:', error);
         setBooks([]);
       }
     };
@@ -43,9 +56,24 @@ const BookList = () => {
 
     setBooks(updatedBooks);
 
-    const readStatus = JSON.parse(localStorage.getItem('readStatus') || '{}');
-    readStatus[id] = !readStatus[id];
-    localStorage.setItem('readStatus', JSON.stringify(readStatus));
+    try {
+      let readStatus: Record<number, boolean> = {};
+      try {
+        readStatus = JSON.parse(localStorage.getItem('readStatus') ?? '{}');
+      } catch (parseError) {
+        console.error(
+          'Failed to parse readStatus from localStorage:',
+          parseError
+        );
+        readStatus = {};
+      }
+
+      readStatus[id] = !readStatus[id];
+
+      localStorage.setItem('readStatus', JSON.stringify(readStatus));
+    } catch (error) {
+      console.error('Failed to update readStatus in localStorage:', error);
+    }
   };
 
   const openModal = (book: Book) => {
@@ -126,7 +154,7 @@ const BookList = () => {
             book={selectedBook}
             onClose={closeModal}
             id={selectedBook.id}
-            setIsDataChanged={setIsDataChanged}
+            onReviewChanged={setIsDataChanged}
           />
         </div>
       )}

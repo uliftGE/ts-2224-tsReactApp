@@ -6,22 +6,27 @@ type BookDetailModalProps = {
   onClose: () => void;
   book: Book;
   id: number;
-  setIsDataChanged?: Dispatch<SetStateAction<boolean>>;
+  onReviewChanged?: Dispatch<SetStateAction<boolean>>;
 };
 
 const BookDetailModal = ({
   book,
   onClose,
   id,
-  setIsDataChanged,
+  onReviewChanged,
 }: BookDetailModalProps) => {
-  const [review, setReview] = useState(book.review || '');
+  const [review, setReview] = useState(book.review ?? '');
   const saveReview = async (event: React.FormEvent) => {
     event.preventDefault();
-    updateBook(id, review);
+    try {
+      await updateBook(id, review);
 
-    if (setIsDataChanged) {
-      setIsDataChanged((prev) => !prev);
+      if (onReviewChanged) {
+        onReviewChanged((prev) => !prev);
+      }
+    } catch (error) {
+      console.error(error);
+      alert('리뷰를 저장하는 데 실패했습니다. 다시 시도해주세요.');
     }
   };
 

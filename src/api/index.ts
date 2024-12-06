@@ -1,36 +1,34 @@
 import { Book, BookListResponse, BookResponse } from '../type/book';
-const BASE_URL = 'http://localhost:4000/books';
-const MESSAGES = {
-  saveSuccess: '리뷰가 저장되었습니다.',
-  saveError: '리뷰 저장에 실패했습니다.',
-  saveNetworkError: '리뷰 저장 중 오류가 발생했습니다.',
-};
+const BASE_URL = 'http://localhost:4000';
 
 // 서버에서 모든 책 데이터 가져오기
-export const fetchBooks = async (): Promise<Book[] | undefined> => {
-  try {
-    const response = await fetch(`${BASE_URL}/books`);
-    const data: BookListResponse = await response.json();
-    return data.data;
-  } catch (error) {
-    console.error('Error fetching books:', error);
-    return [];
+export const fetchBooks = async (): Promise<Book[]> => {
+  const response = await fetch(`${BASE_URL}/books`);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch books: ${response.statusText}`);
   }
+  const data: BookListResponse = await response.json();
+  return data.data;
 };
 
 // 서버에서 특정 책 데이터 가져오기
-export const fetchBookDetail = async (id: number) => {
-  try {
-    const response = await fetch(`${BASE_URL}/books/${id}`);
-    const data: BookResponse = await response.json();
-    return data.data;
-  } catch (error) {
-    console.error(`Error fetching book ${id}:`, error);
+export const fetchBookDetail = async (
+  id: number
+): Promise<Book | { error: string | null; time: string }> => {
+  const response = await fetch(`${BASE_URL}/books/${id}`);
+
+  const data: BookResponse = await response.json();
+  if (!response.ok) {
+    return { error: data.error, time: data.time };
   }
+  return data.data;
 };
 
 // 책 데이터 업데이트 하기
-export const updateBook = async (id: number, review: Book['review']) => {
+export const updateBook = async (
+  id: number,
+  review: Book['review']
+): Promise<Book | { error: string | null; time: string }> => {
   try {
     const response = await fetch(`${BASE_URL}/books/${id}`, {
       method: 'PATCH',
@@ -39,16 +37,14 @@ export const updateBook = async (id: number, review: Book['review']) => {
       },
       body: JSON.stringify({ review }),
     });
-
-    if (response.ok) {
-      return response.json();
-    } else {
-      console.error('Failed to update read status');
-      alert(MESSAGES.saveError);
+    const data: BookResponse = await response.json();
+    if (!response.ok) {
+      return { error: data.error, time: data.time };
     }
+    return await response.json();
   } catch (error) {
-    console.error('Error updating read status:', error);
-    alert(MESSAGES.saveNetworkError);
+    console.error('Error updating book:', error);
+    throw new Error(`Failed to fetch Book ${id}`);
   }
 };
 
@@ -58,7 +54,7 @@ export const addBook = async (
   description: string,
   genre: string,
   coverImage: string
-): Promise<Book | undefined> => {
+): Promise<Book | { error: string | null; time: string }> => {
   try {
     const response = await fetch(BASE_URL, {
       method: 'POST',
@@ -67,16 +63,13 @@ export const addBook = async (
       },
       body: JSON.stringify({ title, description, genre, coverImage }),
     });
-
-    if (response.ok) {
-      const data: BookResponse = await response.json();
-      return data.data;
-    } else {
-      console.error('Failed to add book');
-      return undefined;
+    const data: BookResponse = await response.json();
+    if (!response.ok) {
+      return { error: data.error, time: data.time };
     }
+    return await response.json();
   } catch (error) {
     console.error('Error adding book:', error);
-    return undefined;
+    throw new Error(`Failed to add Book`);
   }
 };

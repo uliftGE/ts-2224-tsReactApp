@@ -1,6 +1,5 @@
-// src/App.js
 import React from 'react';
-import './App.css'; // CSS 파일을 임포트합니다.
+import './App.css';
 import BookList from './component/BookList.tsx';
 
 function App() {

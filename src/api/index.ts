@@ -41,7 +41,7 @@ export const updateBook = async (
     if (!response.ok) {
       return { error: data.error, time: data.time };
     }
-    return await response.json();
+    return data;
   } catch (error) {
     console.error('Error updating book:', error);
     throw new Error(`Failed to fetch Book ${id}`);
@@ -67,7 +67,7 @@ export const addBook = async (
     if (!response.ok) {
       return { error: data.error, time: data.time };
     }
-    return await response.json();
+    return data;
   } catch (error) {
     console.error('Error adding book:', error);
     throw new Error(`Failed to add Book`);
